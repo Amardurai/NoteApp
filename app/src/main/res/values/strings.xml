@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">NoteApp</string>
+    <string name="no_matching_note_found_error_msg">No matching notes found</string>
+    <string name="empty_notes_screen_error_msg">Here you can see all of your notes</string>
+
+</resources>
