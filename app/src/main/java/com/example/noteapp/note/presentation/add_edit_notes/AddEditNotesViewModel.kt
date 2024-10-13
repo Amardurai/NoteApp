@@ -5,16 +5,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.example.noteapp.di.UseCases
-import com.example.noteapp.note.data.model.toNoteEntity
 import com.example.noteapp.note.domain.model.Note
-import com.example.noteapp.note.domain.repository.NoteRepository
 import com.example.noteapp.util.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,30 +23,19 @@ import javax.inject.Inject
 @HiltViewModel
 class AddEditNotesViewModel @Inject constructor(
     private val useCases: UseCases,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
-    init {
-        val noteId = savedStateHandle.toRoute<Screen.AddEditNotesScreen>()
-        if (noteId.id != -1) {
-            viewModelScope.launch {
-                useCases.fetchNoteByIdUseCase(noteId.id)?.also { note ->
-                    currentNoteId = note.id
-                    _addEditNoteState.value = _addEditNoteState.value.copy(
-                        title = note.title,
-                        content = note.content,
-                        isPinned = note.isPinned,
-                        backgroundColor = note.backgroundColor
-                    )
-                }
-            }
-        }
-    }
 
     private var currentNoteId: Int? = null
 
     private val _addEditNoteState = MutableStateFlow(AddEditNoteState())
-    val addEditNoteState = _addEditNoteState.asStateFlow()
+    val addEditNoteState = _addEditNoteState.asStateFlow().onStart {
+        loadNoteIfAvailable()
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = AddEditNoteState()
+    )
 
     private val _eventFlow = Channel<AddEditUiEvent>()
     val eventFlow = _eventFlow.receiveAsFlow()
@@ -79,7 +69,6 @@ class AddEditNotesViewModel @Inject constructor(
                                 title = note.title.trim(),
                                 content = note.content.trim(),
                                 timestamp = System.currentTimeMillis(),
-                                color = note.backgroundColor,
                                 isPinned = note.isPinned
                             )
                         )
@@ -98,5 +87,22 @@ class AddEditNotesViewModel @Inject constructor(
 
             else -> Unit
         }
+    }
+
+    private fun loadNoteIfAvailable() {
+        val noteId = savedStateHandle.toRoute<Screen.AddEditNotesScreen>()
+        if (noteId.id != -1) {
+            viewModelScope.launch {
+                useCases.fetchNoteByIdUseCase(noteId.id)?.also { note ->
+                    currentNoteId = note.id
+                    _addEditNoteState.value = _addEditNoteState.value.copy(
+                        title = note.title,
+                        content = note.content,
+                        isPinned = note.isPinned,
+                    )
+                }
+            }
+        }
+
     }
 }

@@ -1,4 +1,4 @@
-package com.app.noteit.utils
+package com.example.noteapp.utils
 
 import android.content.Context
 import android.content.Intent

@@ -2,7 +2,7 @@ package com.example.noteapp.di
 
 import android.app.Application
 import androidx.room.Room
-import com.app.noteit.data.data_source.local.NoteDatabase
+import com.example.noteapp.note.data.data_source.local.NoteDatabase
 import com.example.noteapp.note.data.repository.NoteRepositoryImpl
 import com.example.noteapp.note.domain.repository.NoteRepository
 import com.example.noteapp.note.domain.usecases.DeleteNoteUsesCase

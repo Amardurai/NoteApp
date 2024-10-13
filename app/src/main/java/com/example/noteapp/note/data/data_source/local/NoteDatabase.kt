@@ -1,4 +1,4 @@
-package com.app.noteit.data.data_source.local
+package com.example.noteapp.note.data.data_source.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -6,7 +6,7 @@ import com.example.noteapp.note.data.model.NoteEntity
 
 @Database(
     entities = [NoteEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class NoteDatabase : RoomDatabase() {

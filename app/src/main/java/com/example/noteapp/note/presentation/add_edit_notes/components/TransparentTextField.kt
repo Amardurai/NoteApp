@@ -9,9 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 
@@ -37,8 +35,7 @@ fun TransparentTextField(
         singleLine = singleLine,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
         textStyle = textStyle.copy(
-            fontSize = fontSize,
-            color = MaterialTheme.colorScheme.onBackground
+            fontSize = fontSize
         ), keyboardOptions = keyboardOptions
     ) { innerTextField ->
         Box(

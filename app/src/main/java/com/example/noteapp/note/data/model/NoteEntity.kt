@@ -9,6 +9,5 @@ data class NoteEntity(
     val title: String,
     val content: String,
     val timestamp: Long,
-    val backgroundColor: Int,
     val isPinned: Boolean,
 )

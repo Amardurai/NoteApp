@@ -1,5 +1,6 @@
 package com.example.noteapp.note.presentation.add_edit_notes.components
 
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -18,16 +19,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import com.app.noteit.utils.shareNote
+import com.example.noteapp.utils.shareNote
 import com.example.noteapp.note.presentation.add_edit_notes.AddEditNoteAction
 import com.example.noteapp.note.presentation.add_edit_notes.AddEditNoteState
 import com.example.noteapp.note.presentation.add_edit_notes.AddEditUiEvent
+import com.example.noteapp.ui.theme.NoteAppTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
 
 
 @Composable
@@ -69,9 +73,7 @@ fun AddEditNoteScreen(
     Scaffold(
         topBar = {
             AddEditScreenTopAppBar(
-                onBackClicked = {
-                    onAction(AddEditNoteAction.SaveNote)
-                },
+                onBackClicked = { onAction(AddEditNoteAction.SaveNote) },
                 pinNote = {
                     onAction(AddEditNoteAction.PinNote(value = !noteState.isPinned))
                 },
@@ -79,8 +81,8 @@ fun AddEditNoteScreen(
                     val noteContent = prepareNoteContentForSharing(noteState)
                     context.shareNote(noteContent)
                 },
-                title = noteState.title,
-                isPinned = noteState.isPinned
+                isPinned = noteState.isPinned,
+                showShareNoteIcon = noteState.title.isNotEmpty()
             )
         },
     ) { innerPadding ->
@@ -99,22 +101,51 @@ fun AddEditNoteScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            TransparentTextField(
+                text = noteState.title,
+                hint = "Type your title...",
+                onValueChange = {
+                    onAction(AddEditNoteAction.EnteredTitle(it))
+                },
+                textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary),
+                singleLine = true,
+                fontSize = 25.sp,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            )
 
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             TransparentTextField(
                 text = noteState.content,
-                hint = "Text",
+                hint = "Start typing your note...",
                 modifier = Modifier.fillMaxHeight(),
                 onValueChange = {
                     onAction(AddEditNoteAction.EnteredContent(it))
                 },
-                textStyle = MaterialTheme.typography.bodyMedium,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onBackground),
                 singleLine = false,
                 fontSize = 16.sp
             )
         }
+    }
+}
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
+@Composable
+private fun AddEditNoteScreenPreview() {
+    NoteAppTheme {
+        AddEditNoteScreen(
+            noteState = AddEditNoteState(
+                title = "Kotlin Best Practices",
+                content = "1. Utilize extension functions to enhance readability and maintainability in your code.\n\n" +
+                        "2. Make use of scope functions and control structures to reduce code redundancy",
+                isPinned = true
+            ),
+            onUiEvent = flowOf(),
+            onAction = {}
+        )
     }
 }
 

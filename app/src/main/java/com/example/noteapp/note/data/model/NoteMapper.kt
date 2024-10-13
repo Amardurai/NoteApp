@@ -8,7 +8,6 @@ fun NoteEntity.toNote() : Note {
         title = title,
         content = content,
         timestamp = timestamp,
-        color = backgroundColor,
         isPinned = isPinned
     )
 }
@@ -19,7 +18,6 @@ fun Note.toNoteEntity() : NoteEntity {
         title = title,
         content = content,
         timestamp = timestamp,
-        backgroundColor = color,
         isPinned = isPinned,
     )
 }

@@ -1,4 +1,4 @@
-package com.app.noteit.data.data_source.local
+package com.example.noteapp.note.data.data_source.local
 
 import androidx.room.Dao
 import androidx.room.Delete
