@@ -30,10 +30,40 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     color = MaterialTheme.colorScheme.background
                 ) {
+/*                    var name by remember { mutableStateOf("Android") }
+                    val context = LocalContext.current
+                    Column {
+                        Text("Hello World")
+                        TextField(
+                            value = name,
+                            onValueChange = { name = it }
+                        )
+                        TextAndButton(
+                            name,
+                            onClick = {
+                                Toast.makeText(context, "Hello $name", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }*/
+
                       val navController = rememberNavController()
                       SetupNavigation(navController)
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun TextAndButton(
+    name: String,
+    onClick: () -> Unit
+) {
+    Column {
+        Text(text = "Hello $name!")
+
+        Button(onClick = onClick) {
+            Text("Click Me")
         }
     }
 }
