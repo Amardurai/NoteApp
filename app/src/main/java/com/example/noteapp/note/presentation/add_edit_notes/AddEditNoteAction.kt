@@ -5,5 +5,4 @@ sealed interface AddEditNoteAction {
     data class EnteredContent(val value: String) : AddEditNoteAction
     data class PinNote(val value: Boolean) : AddEditNoteAction
     data object SaveNote : AddEditNoteAction
-    data object OnNoteSaved : AddEditNoteAction
 }

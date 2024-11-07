@@ -11,6 +11,4 @@ interface NoteRepository {
     suspend fun deleteNote(note: NoteEntity)
 
     suspend fun insertNote(note: NoteEntity)
-
-    fun findNotesByQuery(searchQuery : String) : Flow<List<NoteEntity>>
 }

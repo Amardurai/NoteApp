@@ -1,11 +1,7 @@
 package com.example.noteapp.note.presentation.notes.components
 
 import android.content.res.Configuration
-import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,14 +14,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -40,55 +34,39 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavController
 import com.example.noteapp.R
 import com.example.noteapp.note.domain.model.Note
 import com.example.noteapp.note.presentation.notes.NotesAction
 import com.example.noteapp.note.presentation.notes.NotesState
 import com.example.noteapp.note.presentation.notes.NotesUiEvent
-import com.example.noteapp.note.presentation.notes.SearchBarState
+import com.example.noteapp.note.presentation.notes.NotesViewModel
 import com.example.noteapp.ui.theme.NoteAppTheme
-import kotlinx.coroutines.flow.Flow
+import com.example.noteapp.util.Screen
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flow
+
 
 @Composable
-fun NotesScreen(
-    noteState: NotesState,
-    uiEvent: Flow<NotesUiEvent>,
-    onAction: (NotesAction) -> Unit,
-) {
-    var searchText by remember { mutableStateOf("") }
-    val snackBarHostState = remember { SnackbarHostState() }
+fun NotesScreen(navController: NavController, viewModel: NotesViewModel = hiltViewModel()) {
+
+    val notesState = viewModel.notesFlow.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current
+    val snackBarHostState = remember { SnackbarHostState() }
 
-    // Functions for actions
-    fun clearSearchText() {
-        searchText = ""
-    }
-
-    fun isSearchBarOpened() = (noteState.searchBarState == SearchBarState.OPENED)
-
-    BackHandler {
-        if (isSearchBarOpened()) {
-            onAction(NotesAction.CloseSearchBar)
-        }
-    }
-
-    LaunchedEffect(uiEvent) {
+    LaunchedEffect(viewModel.eventFlow) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            uiEvent.collectLatest { event ->
+            viewModel.eventFlow.collectLatest { event ->
                 if (event is NotesUiEvent.ShowSnackBar) {
                     val result = snackBarHostState.showSnackbar(
                         message = event.message,
@@ -96,39 +74,44 @@ fun NotesScreen(
                         duration = SnackbarDuration.Short
                     )
                     if (result == SnackbarResult.ActionPerformed) {
-                        onAction(NotesAction.RestoreNote)
+                        viewModel.onEvent(NotesAction.RestoreNote)
                     }
                 }
             }
         }
     }
 
+
+    NotesScreen(
+        noteState = notesState.value,
+        onAction = { event ->
+            when (event) {
+                NotesAction.AddNoteClick -> navController.navigate(Screen.AddEditNotesScreen(-1))
+                is NotesAction.NoteClicked -> navController.navigate(Screen.AddEditNotesScreen(event.noteId))
+                else -> Unit
+            }
+            viewModel.onEvent(event)
+        },
+        snackBarHostState = snackBarHostState
+    )
+
+}
+
+
+@Composable
+fun NotesScreen(
+    noteState: NotesState,
+    onAction: (NotesAction) -> Unit,
+    snackBarHostState: SnackbarHostState
+) {
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) },
         topBar = {
-            NotesTopBar(
-                searchText = searchText,
-                onTextChanged = { text ->
-                    searchText = text
-                    onAction(NotesAction.SearchNotes(text))
-
-                    if (text.isEmpty()) {
-                        onAction(NotesAction.GetAllNotes)
-                    }
-                },
-                onClearClicked = { clearSearchText() },
-                onBackClicked = {
-                    clearSearchText()
-                    onAction(NotesAction.CloseSearchBar)
-                    onAction(NotesAction.GetAllNotes)
-                },
-                searchBarState = noteState.searchBarState,
-                onSearchTriggered = { onAction(NotesAction.OpenSearchBar) }
-            )
+            NotesScreenTopAppBar()
         },
         floatingActionButton = {
             NotesScreenFab(onAddNote = {
-                onAction(NotesAction.CloseSearchBar)
                 onAction(NotesAction.AddNoteClick)
             })
         },
@@ -143,43 +126,13 @@ fun NotesScreen(
             onNoteClicked = { noteId ->
                 onAction(NotesAction.NoteClicked(noteId))
             },
-            searchBarOpened = isSearchBarOpened()
         )
-    }
-}
-
-@Composable
-fun NotesTopBar(
-    searchText: String,
-    onTextChanged: (String) -> Unit,
-    onClearClicked: () -> Unit,
-    onBackClicked: () -> Unit,
-    searchBarState: SearchBarState,
-    onSearchTriggered: () -> Unit
-) {
-    AnimatedVisibility(
-        visible = searchBarState == SearchBarState.OPENED,
-        enter = expandHorizontally(expandFrom = Alignment.Start),
-        exit = shrinkHorizontally()
-    ) {
-        SearchAppBar(
-            text = searchText,
-            onTextChanged = onTextChanged,
-            onClearClicked = onClearClicked,
-            onBackClicked = onBackClicked
-        )
-    }
-
-    if (searchBarState == SearchBarState.CLOSED) {
-        NotesScreenTopAppBar(onSearchTriggered = onSearchTriggered)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotesScreenTopAppBar(
-    onSearchTriggered: () -> Unit
-) {
+fun NotesScreenTopAppBar() {
     CenterAlignedTopAppBar(
         title = {
             Text(text = "Notes", style = MaterialTheme.typography.headlineSmall)
@@ -188,17 +141,9 @@ fun NotesScreenTopAppBar(
             containerColor = MaterialTheme.colorScheme.background,
             titleContentColor = MaterialTheme.colorScheme.onBackground
         ),
-        actions = {
-            IconButton(onClick = onSearchTriggered) {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = "Search Icon",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
     )
 }
+
 
 @Composable
 fun NotesContent(
@@ -206,11 +151,8 @@ fun NotesContent(
     innerPadding: PaddingValues,
     onDeleteNote: (Note) -> Unit,
     onNoteClicked: (Int) -> Unit,
-    searchBarOpened: Boolean
 ) {
-    if (searchBarOpened && noteState.notes.isEmpty()) {
-        EmptyScreen(stringRes = R.string.no_matching_note_found_error_msg)
-    } else if (noteState.notes.isEmpty()) {
+    if (noteState.notes.isEmpty()) {
         EmptyScreen(stringRes = R.string.empty_notes_screen_error_msg)
     } else {
         LazyColumn(
@@ -328,8 +270,8 @@ private fun NotesScreenPreview() {
                     )
                 }
             ),
-            uiEvent = flow { },
-            onAction = { }
+            onAction = { },
+            snackBarHostState = SnackbarHostState()
         )
     }
 }
