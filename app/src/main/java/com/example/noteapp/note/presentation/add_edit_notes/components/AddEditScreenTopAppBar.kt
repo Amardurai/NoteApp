@@ -5,7 +5,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,8 +32,6 @@ fun AddEditScreenTopAppBar(
     shareNote: () -> Unit,
 ) {
 
-    val scope = rememberCoroutineScope()
-
     TopAppBar(
         title = { Text("") },
         navigationIcon = {
@@ -50,12 +47,7 @@ fun AddEditScreenTopAppBar(
             scrolledContainerColor = MaterialTheme.colorScheme.background
         ),
         actions = {
-            IconButton(onClick = {
-                scope.launch {
-                    pinNote()
-                }
-            }
-            ) {
+            IconButton(onClick = pinNote) {
                 Icon(
                     imageVector = if (noteState.isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
                     contentDescription = "Pin note",
@@ -63,11 +55,7 @@ fun AddEditScreenTopAppBar(
             }
 
             if (noteState.title.isNotEmpty()) {
-                IconButton(onClick = {
-                    scope.launch {
-                        shareNote()
-                    }
-                }) {
+                IconButton(onClick = shareNote) {
                     Icon(
                         imageVector = Icons.Outlined.Share,
                         contentDescription = "Share note",
