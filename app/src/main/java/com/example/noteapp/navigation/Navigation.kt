@@ -30,49 +30,13 @@ fun SetupNavigation(navController: NavHostController) {
         navController = navController,
         startDestination = Screen.NotesScreen,
     ) {
-        composable<Screen.NotesScreen>(
-            enterTransition = { fadeIn() },
-            popEnterTransition = { fadeIn() },
-            exitTransition = { fadeOut() },
-            popExitTransition = { fadeOut() }) {
-            val viewModel: NotesViewModel = hiltViewModel()
-            val notesState = viewModel.notesFlow.collectAsStateWithLifecycle()
-
-            NotesScreen(
-                notesState.value,
-                viewModel.eventFlow,
-                onAction = { event ->
-                    when (event) {
-                        NotesAction.AddNoteClick -> navController.navigate(Screen.AddEditNotesScreen(-1))
-                        is NotesAction.NoteClicked -> navController.navigate(Screen.AddEditNotesScreen(event.noteId))
-                        else-> Unit
-                    }
-                    viewModel.onEvent(event)
-                }
-            )
+        composable<Screen.NotesScreen> {
+            NotesScreen(navController)
         }
 
-        composable<Screen.AddEditNotesScreen>(
-            enterTransition = { scaleIn() },
-            popEnterTransition = { scaleIn() },
-            exitTransition = { fadeOut() },
-            popExitTransition = { fadeOut() }) {
+        composable<Screen.AddEditNotesScreen> {
 
-            val viewModel: AddEditNotesViewModel = hiltViewModel()
-            val noteState = viewModel.addEditNoteState.collectAsStateWithLifecycle()
-
-            AddEditNoteScreen(
-                noteState = noteState.value,
-                onUiEvent = viewModel.eventFlow,
-                onAction = { event ->
-                    when (event) {
-                        AddEditNoteAction.OnNoteSaved -> {
-                            navController.popBackStack()
-                        }
-                        else -> Unit
-                    }
-                    viewModel.onEvent(event)
-                })
+            AddEditNoteScreen(navController)
 
         }
     }

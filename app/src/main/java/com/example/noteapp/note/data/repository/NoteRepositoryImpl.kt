@@ -21,8 +21,4 @@ class NoteRepositoryImpl(private val noteDao: NoteDao) : NoteRepository {
     override suspend fun insertNote(note: NoteEntity) {
         noteDao.insertNote(note)
     }
-
-    override fun findNotesByQuery(searchQuery: String): Flow<List<NoteEntity>> {
-        return noteDao.findNotesByQuery(searchQuery)
-    }
 }

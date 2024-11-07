@@ -4,5 +4,4 @@ import com.example.noteapp.note.domain.model.Note
 
 data class NotesState(
     var notes: List<Note> = emptyList(),
-    val searchBarState: SearchBarState = SearchBarState.CLOSED,
 )

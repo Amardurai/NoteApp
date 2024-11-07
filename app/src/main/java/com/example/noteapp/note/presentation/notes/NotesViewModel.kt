@@ -64,12 +64,6 @@ class NotesViewModel @Inject constructor(
                 getNotes()
             }
 
-            is NotesAction.SearchNotes -> {
-                searchNote(event.searchText)
-            }
-
-            NotesAction.CloseSearchBar -> _notesFlow.update { it.copy(searchBarState = SearchBarState.CLOSED) }
-            NotesAction.OpenSearchBar -> _notesFlow.update { it.copy(searchBarState = SearchBarState.OPENED) }
             else -> Unit
         }
     }
@@ -80,17 +74,6 @@ class NotesViewModel @Inject constructor(
                 _notesFlow.update { it.copy(notes = notes)
                 }
             }.launchIn(viewModelScope)
-    }
-
-    private fun searchNote(searchText: String) {
-        getNotesJob?.cancel()
-        getNotesJob = viewModelScope.launch {
-            delay(500)
-            useCases.searchNoteUseCase(searchText)
-                .onEach { notes ->
-                    _notesFlow.update { it.copy(notes = notes) }
-                }.launchIn(viewModelScope)
-        }
     }
 
 }
