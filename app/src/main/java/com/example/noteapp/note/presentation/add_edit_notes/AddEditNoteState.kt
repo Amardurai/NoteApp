@@ -4,5 +4,5 @@ data class AddEditNoteState(
     val title: String = "",
     val content: String = "",
     val isPinned: Boolean = false,
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
 )

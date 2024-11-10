@@ -1,9 +1,7 @@
 package com.example.noteapp.note.presentation.add_edit_notes
 
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.example.noteapp.di.UseCases
@@ -14,12 +12,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -39,9 +37,7 @@ class AddEditNotesViewModel @Inject constructor(
     val eventFlow = _eventFlow.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
-            loadNoteIfAvailable()
-        }
+        loadNoteIfAvailable()
     }
 
     fun onEvent(event: AddEditNoteAction) {
@@ -58,53 +54,63 @@ class AddEditNotesViewModel @Inject constructor(
                 _addEditNoteState.update { it.copy(isPinned = event.value) }
             }
 
-            is AddEditNoteAction.SaveNote -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    try {
-                        val note = addEditNoteState.value
+            is AddEditNoteAction.SaveNote -> saveNotes()
 
-                        if (note.title.isEmpty() && note.content.isEmpty()) {
-                            throw Exception("Empty note discarded.")
-                        }
-
-                        useCases.insertNoteUseCase.invoke(
-                            Note(
-                                id = currentNoteId,
-                                title = note.title.trim(),
-                                content = note.content.trim(),
-                                timestamp = System.currentTimeMillis(),
-                                isPinned = note.isPinned
-                            )
-                        )
-                    } catch (e: Exception) {
-                        _eventFlow.send(
-                            AddEditUiEvent.ShowToast(
-                                message = e.message ?: "Couldn't save note"
-                            )
-                        )
-                    }
-                    _eventFlow.send(AddEditUiEvent.SaveNote)
-                }
-            }
         }
     }
 
-    private suspend fun loadNoteIfAvailable() {
-        _addEditNoteState.update { it.copy(isLoading = true) }
-        val noteId = savedStateHandle.toRoute<Screen.AddEditNotesScreen>()
-        if (noteId.id != -1) {
-            delay(2000)
-            useCases.fetchNoteByIdUseCase(noteId.id)?.let { note ->
-                currentNoteId = note.id
-                _addEditNoteState.value = _addEditNoteState.value.copy(
-                    title = note.title,
-                    content = note.content,
-                    isPinned = note.isPinned,
-                    isLoading = false
+    private fun saveNotes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val note = addEditNoteState.value
+
+                if (note.title.isEmpty() && note.content.isEmpty()) {
+                    throw Exception("Empty note discarded.")
+                }
+
+                useCases.insertNoteUseCase.invoke(
+                    Note(
+                        id = currentNoteId,
+                        title = note.title.trim(),
+                        content = note.content.trim(),
+                        timestamp = System.currentTimeMillis(),
+                        isPinned = note.isPinned
+                    )
+                )
+            } catch (e: Exception) {
+                _eventFlow.send(
+                    AddEditUiEvent.ShowToast(
+                        message = e.message ?: "Couldn't save note"
+                    )
                 )
             }
-        } else {
-            _addEditNoteState.value = _addEditNoteState.value.copy(isLoading = false)
+            delay(3000)
+            _eventFlow.send(AddEditUiEvent.SaveNote)
+        }
+    }
+
+    private fun loadNoteIfAvailable() {
+        val noteId = savedStateHandle.toRoute<Screen.AddEditNotesScreen>()
+
+        if (noteId.id != -1) {
+            useCases.fetchNoteByIdUseCase.invoke(noteId.id)
+                .onEach {
+                    _addEditNoteState.update { it.copy(isLoading = true) }
+                    delay(2000)
+                }
+                .onEach { note ->
+                    note?.let {
+                        currentNoteId = note.id
+                        _addEditNoteState.value = _addEditNoteState.value.copy(
+                            title = note.title,
+                            content = note.content,
+                            isPinned = note.isPinned,
+                            isLoading = false
+                        )
+                    }
+                }.catch {
+                    _addEditNoteState.update { it.copy(isLoading = false) }
+                }.launchIn(viewModelScope)
         }
     }
 }

@@ -35,7 +35,6 @@ class NotesViewModel @Inject constructor(
     private val _notesFlow = MutableStateFlow(NotesState())
     val notesFlow = _notesFlow.asStateFlow()
 
-    private var getNotesJob: Job? = null
 
     init {
         getNotes()
@@ -60,20 +59,16 @@ class NotesViewModel @Inject constructor(
                 }
             }
 
-            is NotesAction.GetAllNotes -> {
-                getNotes()
-            }
-
             else -> Unit
         }
     }
 
     private fun getNotes() {
-        getNotesJob?.cancel()
-        getNotesJob = useCases.getAllNotesUseCase().onEach { notes ->
-                _notesFlow.update { it.copy(notes = notes)
-                }
-            }.launchIn(viewModelScope)
+        useCases.getAllNotesUseCase().onEach { notes ->
+            _notesFlow.update {
+                it.copy(notes = notes)
+            }
+        }.launchIn(viewModelScope)
     }
 
 }

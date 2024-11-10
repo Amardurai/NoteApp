@@ -1,6 +1,5 @@
 package com.example.noteapp.note.domain.usecases
 
-import com.example.noteapp.note.data.model.NoteEntity
 import com.example.noteapp.note.data.model.toNoteList
 import com.example.noteapp.note.domain.model.Note
 import com.example.noteapp.note.domain.repository.NoteRepository
