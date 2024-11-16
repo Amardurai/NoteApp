@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -32,12 +33,17 @@ class NotesViewModel @Inject constructor(
     private val _eventFlow = MutableSharedFlow<NotesUiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    private val _notesFlow = MutableStateFlow(NotesState())
-    val notesFlow = _notesFlow.asStateFlow()
-
+    private val _notes = MutableStateFlow<List<Note>>(emptyList())
+    val notes = _notes.asStateFlow()
 
     init {
         getNotes()
+    }
+
+    private fun getNotes() {
+        useCases.getAllNotesUseCase.invoke().onEach { notes ->
+            _notes.value = notes
+        }.launchIn(viewModelScope)
     }
 
     fun onEvent(event: NotesAction) {
@@ -61,14 +67,6 @@ class NotesViewModel @Inject constructor(
 
             else -> Unit
         }
-    }
-
-    private fun getNotes() {
-        useCases.getAllNotesUseCase().onEach { notes ->
-            _notesFlow.update {
-                it.copy(notes = notes)
-            }
-        }.launchIn(viewModelScope)
     }
 
 }

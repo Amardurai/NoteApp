@@ -6,5 +6,5 @@ sealed class Screen {
     @Serializable
     object NotesScreen
     @Serializable
-    data class AddEditNotesScreen(val id: Int)
+    data class EditNotesScreen(val id: Int)
 }

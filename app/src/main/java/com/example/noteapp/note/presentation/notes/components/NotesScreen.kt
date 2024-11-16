@@ -49,7 +49,6 @@ import androidx.navigation.NavController
 import com.example.noteapp.R
 import com.example.noteapp.note.domain.model.Note
 import com.example.noteapp.note.presentation.notes.NotesAction
-import com.example.noteapp.note.presentation.notes.NotesState
 import com.example.noteapp.note.presentation.notes.NotesUiEvent
 import com.example.noteapp.note.presentation.notes.NotesViewModel
 import com.example.noteapp.ui.theme.NoteAppTheme
@@ -60,7 +59,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun NotesScreen(navController: NavController, viewModel: NotesViewModel = hiltViewModel()) {
 
-    val notesState = viewModel.notesFlow.collectAsStateWithLifecycle()
+    val notesState = viewModel.notes.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current
     val snackBarHostState = remember { SnackbarHostState() }
 
@@ -86,8 +85,8 @@ fun NotesScreen(navController: NavController, viewModel: NotesViewModel = hiltVi
         noteState = notesState.value,
         onAction = { event ->
             when (event) {
-                NotesAction.AddNoteClick -> navController.navigate(Screen.AddEditNotesScreen(-1))
-                is NotesAction.NoteClicked -> navController.navigate(Screen.AddEditNotesScreen(event.noteId))
+                NotesAction.AddNoteClick -> navController.navigate(Screen.EditNotesScreen(-1))
+                is NotesAction.NoteClicked -> navController.navigate(Screen.EditNotesScreen(event.noteId))
                 else -> Unit
             }
             viewModel.onEvent(event)
@@ -100,7 +99,7 @@ fun NotesScreen(navController: NavController, viewModel: NotesViewModel = hiltVi
 
 @Composable
 fun NotesScreen(
-    noteState: NotesState,
+    noteState: List<Note>,
     onAction: (NotesAction) -> Unit,
     snackBarHostState: SnackbarHostState
 ) {
@@ -118,7 +117,7 @@ fun NotesScreen(
         containerColor = MaterialTheme.colorScheme.surface,
     ) { innerPadding ->
         NotesContent(
-            noteState = noteState,
+            notes = noteState,
             innerPadding = innerPadding,
             onDeleteNote = { note ->
                 onAction(NotesAction.DeleteNote(note))
@@ -147,12 +146,12 @@ fun NotesScreenTopAppBar() {
 
 @Composable
 fun NotesContent(
-    noteState: NotesState,
+    notes: List<Note>,
     innerPadding: PaddingValues,
     onDeleteNote: (Note) -> Unit,
     onNoteClicked: (Int) -> Unit,
 ) {
-    if (noteState.notes.isEmpty()) {
+    if (notes.isEmpty()) {
         EmptyScreen(stringRes = R.string.empty_notes_screen_error_msg)
     } else {
         LazyColumn(
@@ -162,7 +161,7 @@ fun NotesContent(
                 .padding(8.dp)
         ) {
             items(
-                items = noteState.notes,
+                items = notes,
                 key = { it.id!! }
             ) { note ->
                 SwipeBox(onDelete = { onDeleteNote(note) }) {
@@ -259,17 +258,16 @@ fun NotesScreenFab(onAddNote: () -> Unit) {
 private fun NotesScreenPreview() {
     NoteAppTheme {
         NotesScreen(
-            noteState = NotesState(
-                notes = (1..10).map {
-                    Note(
-                        id = 1,
-                        title = "Jetpack Compose",
-                        content = "Compose is a modern toolkit for building native Android UI. It simplifies and accelerates UI development on Android",
-                        timestamp = 100,
-                        isPinned = true,
-                    )
-                }
-            ),
+            noteState = (1..10).map {
+                Note(
+                    id = 1,
+                    title = "Jetpack Compose",
+                    content = "Compose is a modern toolkit for building native Android UI. It simplifies and accelerates UI development on Android",
+                    timestamp = 100,
+                    isPinned = true,
+                )
+            }
+            ,
             onAction = { },
             snackBarHostState = SnackbarHostState()
         )

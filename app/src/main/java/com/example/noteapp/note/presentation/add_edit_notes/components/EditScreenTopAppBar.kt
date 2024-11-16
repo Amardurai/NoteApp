@@ -13,25 +13,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
-import com.example.noteapp.note.presentation.add_edit_notes.AddEditNoteState
-import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import com.example.noteapp.utils.shareNote
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditScreenTopAppBar(
-    noteState: AddEditNoteState,
+fun EditScreenTopAppBar(
+    title: String,
+    isPinned: Boolean,
     onBackClicked: () -> Unit,
     pinNote: () -> Unit,
-    shareNote: () -> Unit,
+//    shareNote: () -> Unit,
 ) {
 
+    val context = LocalContext.current
     TopAppBar(
         title = { Text("") },
         navigationIcon = {
@@ -49,20 +45,21 @@ fun AddEditScreenTopAppBar(
         actions = {
             IconButton(onClick = pinNote) {
                 Icon(
-                    imageVector = if (noteState.isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                    imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
                     contentDescription = "Pin note",
                 )
             }
-
-            if (noteState.title.isNotEmpty()) {
-                IconButton(onClick = shareNote) {
-                    Icon(
-                        imageVector = Icons.Outlined.Share,
-                        contentDescription = "Share note",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
+            IconButton(onClick = {
+//                val noteContent = prepareNoteContentForSharing(noteState)
+                context.shareNote(title)
+            }) {
+                Icon(
+                    imageVector = Icons.Outlined.Share,
+                    contentDescription = "Share note",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
+
         }
     )
 }

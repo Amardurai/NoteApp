@@ -1,6 +1,7 @@
-package com.example.noteapp.note.presentation.add_edit_notes
+package com.example.noteapp.note.presentation.add_edit_notes.mvi
 
-data class AddEditNoteState(
+
+data class EditNoteState(
     val title: String = "",
     val content: String = "",
     val isPinned: Boolean = false,

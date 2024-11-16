@@ -1,12 +1,10 @@
-package com.example.noteapp.note.presentation.add_edit_notes.components
+package com.example.noteapp.note.presentation.add_edit_notes.mvi
 
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,16 +17,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,75 +31,63 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
+import com.example.noteapp.note.presentation.add_edit_notes.components.EditScreenTopAppBar
+import com.example.noteapp.note.presentation.add_edit_notes.components.TransparentTextField
 import com.example.noteapp.utils.shareNote
-import com.example.noteapp.note.presentation.add_edit_notes.AddEditNoteAction
-import com.example.noteapp.note.presentation.add_edit_notes.AddEditNoteState
-import com.example.noteapp.note.presentation.add_edit_notes.AddEditNotesViewModel
-import com.example.noteapp.note.presentation.add_edit_notes.AddEditUiEvent
 import com.example.noteapp.ui.theme.NoteAppTheme
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flowOf
 
 
 @Composable
-fun AddEditNoteScreen(
+fun EditNoteScreenMvi(
     navController: NavController,
-    viewModel: AddEditNotesViewModel = hiltViewModel(),
+    viewModel: MviViewModel = hiltViewModel(),
 ) {
 
     val lifecycle = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    LaunchedEffect(viewModel.eventFlow) {
+    LaunchedEffect(viewModel.uiEventFlow) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.eventFlow.collectLatest { event ->
+            viewModel.uiEventFlow.collectLatest { event ->
                 when (event) {
-
-                    AddEditUiEvent.SaveNote -> {
+                    EditUiEvent.GoBack -> {
                         navController.popBackStack()
                     }
-
-                    is AddEditUiEvent.ShowToast -> {
+                    is EditUiEvent.ShowToast -> {
                         Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                     }
-
                 }
             }
         }
     }
 
-    val noteState = viewModel.addEditNoteState.collectAsStateWithLifecycle()
+    val noteState = viewModel.editNoteState.collectAsStateWithLifecycle()
 
-    AddEditNoteScreen(
+    EditNoteScreenMvi(
         noteState = noteState.value,
         onAction = viewModel::onEvent
     )
 
     BackHandler {
-        viewModel.onEvent(AddEditNoteAction.SaveNote)
+        viewModel.onEvent(EditNoteAction.SaveNote)
     }
 }
 
 @Composable
-fun AddEditNoteScreen(
-    noteState: AddEditNoteState,
-    onAction: (AddEditNoteAction) -> Unit,
+fun EditNoteScreenMvi(
+    noteState: EditNoteState,
+    onAction: (EditNoteAction) -> Unit,
 ) {
-
-    val context = LocalContext.current
 
     Scaffold(
         topBar = {
-            AddEditScreenTopAppBar(
-                noteState = noteState,
-                onBackClicked = { onAction(AddEditNoteAction.SaveNote) },
+            EditScreenTopAppBar(
+                title = noteState.title,
+                isPinned = noteState.isPinned,
+                onBackClicked = { onAction(EditNoteAction.SaveNote) },
                 pinNote = {
-                    onAction(AddEditNoteAction.PinNote(value = !noteState.isPinned))
-                },
-                shareNote = {
-                    val noteContent = prepareNoteContentForSharing(noteState)
-                    context.shareNote(noteContent)
+                    onAction(EditNoteAction.TogglePin)
                 },
             )
         },
@@ -116,8 +98,8 @@ fun AddEditNoteScreen(
             } else {
                 NoteEditor(
                     noteState = noteState,
-                    onTitleChanged = { title -> onAction(AddEditNoteAction.EnteredTitle(title)) },
-                    onContentChanged = { content -> onAction(AddEditNoteAction.EnteredContent(content)) }
+                    onTitleChanged = { title -> onAction(EditNoteAction.EnteredTitle(title)) },
+                    onContentChanged = { content -> onAction(EditNoteAction.EnteredContent(content)) }
                 )
             }
         }
@@ -137,7 +119,7 @@ fun LoadingIndicator() {
 
 @Composable
 fun NoteEditor(
-    noteState: AddEditNoteState,
+    noteState: EditNoteState,
     onTitleChanged: (String) -> Unit,
     onContentChanged: (String) -> Unit
 ) {
@@ -176,13 +158,12 @@ fun NoteEditor(
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
+@PreviewLightDark
 @Composable
-private fun AddEditNoteScreenPreview() {
+private fun EditNoteScreenMviPreview() {
     NoteAppTheme {
-        AddEditNoteScreen(
-            noteState = AddEditNoteState(
+        EditNoteScreenMvi(
+            noteState = EditNoteState(
                 title = "Kotlin Best Practices",
                 content = "1. Utilize extension functions to enhance readability and maintainability in your code.\n\n" +
                         "2. Make use of scope functions and control structures to reduce code redundancy",
@@ -194,9 +175,10 @@ private fun AddEditNoteScreenPreview() {
 }
 
 
-private fun prepareNoteContentForSharing(note: AddEditNoteState): String {
+private fun prepareNoteContentForSharing(note: EditNoteState): String {
     return "${note.title}\n\n${note.content}"
 }
+
 
 
 
