@@ -28,6 +28,7 @@ class MvvmViewmodel @Inject constructor(
 
     private var currentNoteId: Int? = null
 
+    //States
     private val _title = MutableStateFlow("")
     val title = _title.asStateFlow()
 
@@ -40,6 +41,8 @@ class MvvmViewmodel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
+
+    //Events
     private val _noteSaved = Channel<Boolean>()
     val noteSaved = _noteSaved.receiveAsFlow()
 

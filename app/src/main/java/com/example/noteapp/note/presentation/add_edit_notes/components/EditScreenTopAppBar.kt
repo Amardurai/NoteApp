@@ -14,6 +14,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import com.example.noteapp.note.presentation.add_edit_notes.mvi.EditNoteState
+import com.example.noteapp.note.presentation.add_edit_notes.mvvm.prepareNoteContentForSharing
 import com.example.noteapp.utils.shareNote
 
 
@@ -24,7 +26,6 @@ fun EditScreenTopAppBar(
     isPinned: Boolean,
     onBackClicked: () -> Unit,
     pinNote: () -> Unit,
-//    shareNote: () -> Unit,
 ) {
 
     val context = LocalContext.current
@@ -50,7 +51,6 @@ fun EditScreenTopAppBar(
                 )
             }
             IconButton(onClick = {
-//                val noteContent = prepareNoteContentForSharing(noteState)
                 context.shareNote(title)
             }) {
                 Icon(

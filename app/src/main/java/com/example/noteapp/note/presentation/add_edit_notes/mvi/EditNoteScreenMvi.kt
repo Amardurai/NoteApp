@@ -22,7 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,9 +32,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
+import com.example.noteapp.note.domain.model.Note
+import com.example.noteapp.note.domain.model.NotePreviewParameterProvider
 import com.example.noteapp.note.presentation.add_edit_notes.components.EditScreenTopAppBar
 import com.example.noteapp.note.presentation.add_edit_notes.components.TransparentTextField
-import com.example.noteapp.utils.shareNote
+import com.example.noteapp.note.presentation.add_edit_notes.mvvm.LoadingIndicator
 import com.example.noteapp.ui.theme.NoteAppTheme
 import kotlinx.coroutines.flow.collectLatest
 
@@ -54,6 +57,7 @@ fun EditNoteScreenMvi(
                     EditUiEvent.GoBack -> {
                         navController.popBackStack()
                     }
+
                     is EditUiEvent.ShowToast -> {
                         Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                     }
@@ -131,6 +135,7 @@ fun NoteEditor(
     ) {
         Spacer(modifier = Modifier.height(10.dp))
 
+        //Title field
         TransparentTextField(
             text = noteState.title,
             hint = "Type your title...",
@@ -141,11 +146,12 @@ fun NoteEditor(
             ),
             singleLine = true,
             fontSize = 25.sp,
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        //Content field
         TransparentTextField(
             text = noteState.content,
             hint = "Start typing your note...",
@@ -153,32 +159,27 @@ fun NoteEditor(
             onValueChange = onContentChanged,
             textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onBackground),
             singleLine = false,
-            fontSize = 16.sp
+            fontSize = 16.sp,
         )
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
-private fun EditNoteScreenMviPreview() {
+private fun EditNoteScreenMviPreview(
+    @PreviewParameter(NotePreviewParameterProvider::class) note: Note
+) {
     NoteAppTheme {
         EditNoteScreenMvi(
             noteState = EditNoteState(
-                title = "Kotlin Best Practices",
-                content = "1. Utilize extension functions to enhance readability and maintainability in your code.\n\n" +
-                        "2. Make use of scope functions and control structures to reduce code redundancy",
-                isPinned = true
+                title = note.title,
+                content = note.content,
+                isPinned = note.isPinned
             ),
             onAction = {}
         )
     }
 }
-
-
-private fun prepareNoteContentForSharing(note: EditNoteState): String {
-    return "${note.title}\n\n${note.content}"
-}
-
 
 
 

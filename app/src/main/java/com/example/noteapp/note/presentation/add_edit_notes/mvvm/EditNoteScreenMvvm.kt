@@ -31,7 +31,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
-import com.example.noteapp.utils.shareNote
 import com.example.noteapp.note.presentation.add_edit_notes.components.EditScreenTopAppBar
 import com.example.noteapp.note.presentation.add_edit_notes.components.TransparentTextField
 import com.example.noteapp.ui.theme.NoteAppTheme
@@ -189,7 +188,7 @@ private fun EditNoteScreenMvvmPreview() {
 }
 
 
-private fun prepareNoteContentForSharing(title: String, content: String): String {
+fun prepareNoteContentForSharing(title: String, content: String): String {
     return "${title}\n\n${content}"
 }
 
